@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #Ganador {
+            background-color: white;
+            padding: 5px;
+            display: inline-block;
+        }
+
+        body {
+            background-image: url(we.png);
+            background-repeat: no-repeat;
+            background-size: cover;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: white;
+        }
+
+        .wheel-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .pointer {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid black;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .inputArea {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 400px;
+            height: 150px;
+            resize: none;
+            background-color: bisque;
+            color: white;
+            border: none;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: orange;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+
+        #botonazo {
+            border-radius: 30px;
+            padding: 10px;
+        }
+
+        #nashe {
+            max-width: 400px;
+            padding: 30px;
+            transform: translateY(-280px) translateX(-399px);
+        }
+
+        /* Estilo adaptado para pantallas pequeñas */
+        @media (max-width: 600px) {
+            canvas {
+                width: 80%;
+                height: auto;
+            }
+
+
+
+            body {
+                background-size: auto;
+                overflow: auto;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            textarea {
+                max-width: 90%;
+            }
+
+            button {
+                width: 90%;
+            }
+
+            .inputArea {
+                width: 90%;
+            }
+
+            #nashe {
+                transform: none !important;
+                /* Elimina la transformación que oculta el botón */
+                position: relative;
+                margin-top: 20px;
+                width: 80%;
+                display: block;
+            }
+
+
+        }
+    </style>
+    <title>La Ruleta de Gonza</title>
+</head>
+
+<body>
+    <h1>A elegir tus próximas botas</h1>
+    <p id="Ganador">Ganador: Nadie</p>
+
+    <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="400" height="400"></canvas>
+        <button id="nashe" onclick="spin()">Girar Ruleta</button>
+    </div>
+
+
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = canvas.width / 2;
+        let items = ["Arena", "Blanco", "Chocolate", "Gris-Osc", "Militar", "Negro", "Sintético"];
+        let colors = [];
+        let currentDeg = 0;
+        let step;
+        let speed = 0;
+        let maxRotation;
+        let pause = false;
+
+        function randomColor() {
+            return `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+        }
+
+        function toRad(deg) {
+            return deg * Math.PI / 180;
+        }
+
+        function drawWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            step = 360 / items.length;
+            colors = items.map(() => randomColor());
+
+            let startDeg = currentDeg;
+            for (let i = 0; i < items.length; i++, startDeg += step) {
+                let endDeg = startDeg + step;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, toRad(startDeg), toRad(endDeg));
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                ctx.closePath();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(toRad((startDeg + endDeg) / 2));
+                ctx.fillStyle = "black";
+                ctx.font = "bold 16px Arial";
+                ctx.fillText(items[i], radius * 0.6, 0);
+                ctx.restore();
+            }
+        }
+
+        function updateWheel() {
+            items = document.getElementById("items").value.split("\n").filter(item => item.trim() !== "");
+            if (items.length > 1) {
+                currentDeg = 0;
+                drawWheel();
+            }
+        }
+
+        function spin() {
+            if (speed !== 0) return;
+            currentDeg = 0;
+            maxRotation = Math.random() * 1440 + 720;
+            pause = false;
+            requestAnimationFrame(animate);
+        }
+
+        function animate() {
+            if (pause) return;
+            speed = Math.max(2, (maxRotation - currentDeg) / 30);
+            if (currentDeg >= maxRotation) {
+                speed = 0;
+                pause = true;
+                declareWinner();
+            }
+            currentDeg += speed;
+            drawWheel();
+            requestAnimationFrame(animate);
+        }
+
+        function declareWinner() {
+            let winningIndex = Math.floor((currentDeg % 360) / step);
+            document.getElementById("Ganador").innerText = `Ganador: ${items[winningIndex]}`;
+        }
+
+        drawWheel();
+    </script>
+</body>
+
+</html>
